@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
 
 // Proxy route for OpenAI Whisper — avoids CORS
 app.post('/api/transcribe', (req, res) => {
-  const apiKey = process.env.OPENAI_API_KEY || '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';
+  const apiKey = process.env.OPENAI_API_KEY;
 
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
