@@ -1133,8 +1133,8 @@ window.transcribePreview = async function() {
     fd.append('language', 'it');
     fd.append('response_format', 'verbose_json');
     fd.append('timestamp_granularities[]', 'word');
-    var res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method:'POST', headers:{'Authorization':'Bearer '+apiKey}, body:fd
+    var res = await fetch('/api/transcribe', {
+      method:'POST', body:fd
     });
     if(!res.ok) { var e=await res.json(); throw new Error(e.error&&e.error.message||'Errore API'); }
     var tx = await res.json();
@@ -1350,8 +1350,8 @@ window.runAll = async function() {
         fd.append('file', item.file, item.file.name);
         fd.append('model', 'whisper-1'); fd.append('language','it');
         fd.append('response_format','verbose_json'); fd.append('timestamp_granularities[]','word');
-        var res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-          method:'POST', headers:{'Authorization':'Bearer '+apiKey}, body:fd
+        var res = await fetch('/api/transcribe', {
+          method:'POST', body:fd
         });
         if(!res.ok) { var e=await res.json(); throw new Error('Whisper: '+(e.error&&e.error.message||'Errore API')); }
         tx = await res.json();
