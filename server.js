@@ -12,30 +12,35 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'story_subtitler.html'));
 });
 
-// Proxy route for OpenAI Whisper — avoids CORS
+// Proxy route for Groq Whisper — avoids CORS
 app.post('/api/transcribe', (req, res) => {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY || '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';
 
-  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Collect incoming multipart data and forward to OpenAI
   const chunks = [];
   req.on('data', chunk => chunks.push(chunk));
   req.on('end', () => {
     const body = Buffer.concat(chunks);
+
+    // Rebuild multipart body replacing model with groq's whisper model
+    // Groq uses whisper-large-v3 instead of whisper-1
+    const bodyStr = body.toString('binary');
+    const newBodyStr = bodyStr.replace(/whisper-1/g, 'whisper-large-v3');
+    const newBody = Buffer.from(newBodyStr, 'binary');
+
     const contentType = req.headers['content-type'];
 
     const options = {
-      hostname: 'api.openai.com',
-      path: '/v1/audio/transcriptions',
+      hostname: 'api.groq.com',
+      path: '/openai/v1/audio/transcriptions',
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': contentType,
-        'Content-Length': body.length
+        'Content-Length': newBody.length
       }
     };
 
@@ -49,7 +54,7 @@ app.post('/api/transcribe', (req, res) => {
       res.status(500).json({ error: err.message });
     });
 
-    proxyReq.write(body);
+    proxyReq.write(newBody);
     proxyReq.end();
   });
 });
