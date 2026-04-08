@@ -1495,14 +1495,18 @@ function buildASS(tx, s, prebuiltChunks) {
 // ══════════════════════════════════════════════════════════════
 
 async function burnVideo(file, chunks, settings) {
+  // Garantisce che chunks sia sempre un array valido
+  var safeChunks = Array.isArray(chunks) ? chunks : [];
+
   var fd = new FormData();
   fd.append('video', file, file.name);
-  fd.append('chunks', JSON.stringify(chunks));
+  fd.append('chunks', JSON.stringify(safeChunks));
   fd.append('style', JSON.stringify({
     sid:        STDATA[settings.selSt].id,
-    fontbold:   [1,1,1,1,1,0,1,0][settings.selFt] !== undefined ? [1,1,1,1,1,0,1,0][settings.selFt] : 1,
-    fs:         settings.fs,
-    out:        settings.out,
+    selFt:      settings.selFt || 0,
+    fontbold:   ([1,1,1,1,1,0,1,0][settings.selFt] !== undefined) ? [1,1,1,1,1,0,1,0][settings.selFt] : 1,
+    fs:         settings.fs   || 18,
+    out:        settings.out  || 2,
     tc:         settings.tc   || '#FFFFFF',
     oc:         settings.oc   || '#000000',
     bannerText: (settings.bannerText || '').trim(),

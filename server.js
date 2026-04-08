@@ -77,7 +77,11 @@ app.post('/api/burn', upload.fields([{name:'video',maxCount:1}]), (req,res)=>{
     if(!vf) return res.status(400).json({error:'No video'});
     let style={}, chunks=[];
     try{style=JSON.parse(req.body&&req.body.style||'{}');}catch(e){}
-    try{chunks=JSON.parse(req.body&&req.body.chunks||'[]');}catch(e){}
+    try{
+      var rawChunks=req.body&&req.body.chunks;
+      if(rawChunks){ chunks=JSON.parse(rawChunks); }
+      if(!Array.isArray(chunks)){ console.error('chunks not array:',typeof chunks); chunks=[]; }
+    }catch(e){ console.error('chunks parse err:',e.message); chunks=[]; }
 
     console.log('BURN sid='+style.sid+' selFt='+style.selFt+' chunks='+chunks.length);
 
