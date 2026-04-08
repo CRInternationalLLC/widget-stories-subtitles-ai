@@ -1321,12 +1321,10 @@ window.runAll = async function() {
       var m1 = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
       var m2 = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js');
       ffInst = new m1.FFmpeg();
-      var base = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
-      var workerBase = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm';
       await ffInst.load({
-        coreURL: await m2.toBlobURL(base+'/ffmpeg-core.js','text/javascript'),
-        wasmURL: await m2.toBlobURL(base+'/ffmpeg-core.wasm','application/wasm'),
-        workerURL: await m2.toBlobURL(workerBase+'/worker.js','text/javascript')
+        coreURL: await m2.toBlobURL('/ffmpeg/ffmpeg-core.js','text/javascript'),
+        wasmURL: await m2.toBlobURL('/ffmpeg/ffmpeg-core.wasm','application/wasm'),
+        workerURL: await m2.toBlobURL('/ffmpeg/worker.js','text/javascript')
       });
     }
     sStep(1,'done');

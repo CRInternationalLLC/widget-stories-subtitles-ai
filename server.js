@@ -4,12 +4,38 @@ const https = require('https');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files
+// Helper: fetch a URL and pipe to response
+function proxyGet(url, res, contentType) {
+  https.get(url, (r) => {
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    r.pipe(res);
+  }).on('error', (err) => {
+    console.error('Proxy GET error:', err);
+    res.status(500).send(err.message);
+  });
+}
+
+// FFmpeg WASM files served from same origin — eliminates CORS on Worker
+app.get('/ffmpeg/worker.js', (req, res) => {
+  proxyGet('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/worker.js', res, 'text/javascript');
+});
+app.get('/ffmpeg/ffmpeg-core.js', (req, res) => {
+  proxyGet('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js', res, 'text/javascript');
+});
+app.get('/ffmpeg/ffmpeg-core.wasm', (req, res) => {
+  proxyGet('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm', res, 'application/wasm');
+});
+
+// COOP/COEP headers for SharedArrayBuffer (required by FFmpeg WASM)
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
   next();
 });
+
+// Serve static files
 app.use(express.static(path.join(__dirname)));
 
 // Home route
@@ -29,13 +55,9 @@ app.post('/api/transcribe', (req, res) => {
   req.on('data', chunk => chunks.push(chunk));
   req.on('end', () => {
     const body = Buffer.concat(chunks);
-
-    // Rebuild multipart body replacing model with groq's whisper model
-    // Groq uses whisper-large-v3 instead of whisper-1
     const bodyStr = body.toString('binary');
     const newBodyStr = bodyStr.replace(/whisper-1/g, 'whisper-large-v3');
     const newBody = Buffer.from(newBodyStr, 'binary');
-
     const contentType = req.headers['content-type'];
 
     const options = {
