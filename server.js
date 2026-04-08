@@ -114,7 +114,7 @@ app.post('/api/burn', upload.fields([{name:'video',maxCount:1}]), (req,res)=>{
           const bfs=Math.max(12,Math.round((style.bfs||24)*sx));
           const bpad=Math.round(14*sx);
           const btop=Math.round(52*sy);
-          const bbg=col(style.bbg||'#F5821F',100);
+          const bbg=col(style.bbg||'#F5821F',0);
           const btc=style.btc||'#FFFFFF';
           filters.push("drawtext=textfile='"+bPath+"':fontfile='"+FP+"':fontsize="+bfs+":fontcolor="+btc+":box=1:boxcolor="+bbg+":boxborderw="+bpad+":x=(w-text_w)/2:y="+btop);
         }
@@ -129,16 +129,44 @@ app.post('/api/burn', upload.fields([{name:'video',maxCount:1}]), (req,res)=>{
           const enable="between(t,"+s.toFixed(3)+","+e.toFixed(3)+")";
           const isKw=style.kw&&txt.toLowerCase().includes(String(style.kw).toLowerCase());
           const usedColor=isKw?(style.kwc||'#F5821F'):tc;
-          let f="drawtext=textfile='"+tPath+"':enable='"+enable+"':fontfile='"+FP+"':fontsize="+fontSize+":fontcolor="+usedColor;
+          // FIX: classic usa sempre bianco come nel preview (#FFF hardcoded)
+          const fontColor = (sid==='classic') ? '#FFFFFF' : usedColor;
+          let f="drawtext=textfile='"+tPath+"':enable='"+enable+"':fontfile='"+FP+"':fontsize="+fontSize+":fontcolor="+fontColor;
           switch(sid){
-            case 'classic':    f+=':box=1:boxcolor='+col('#000000',30)+':boxborderw='+Math.round(10*sx); break;
-            case 'bold':       f+=':borderw='+outlineW+':bordercolor='+oc+':shadowx='+Math.round(2*sx)+':shadowy='+Math.round(2*sy)+':shadowcolor='+col('#000000',80); break;
-            case 'neon':       f+=':borderw='+outlineW+':bordercolor='+oc; break;
-            case 'highlight':  f+=':box=1:boxcolor='+col(oc,100)+':boxborderw='+Math.round(10*sx); break;
-            case 'minimal':    f+=':shadowx='+Math.round(1*sx)+':shadowy='+Math.round(1*sy)+':shadowcolor='+col('#000000',70); break;
-            case 'typewriter': f+=':box=1:boxcolor='+col('#000000',45)+':boxborderw='+Math.round(10*sx); break;
-            case 'pulito':     if(outlineW>0) f+=':borderw='+outlineW+':bordercolor='+oc; break;
-            default:           f+=':borderw='+outlineW+':bordercolor='+oc;
+            case 'classic':
+              f+=':box=1:boxcolor='+col('#000000',30)+':boxborderw='+Math.round(10*sx);
+              break;
+            case 'bold':
+              // Contorno spesso (simula text-stroke) + ombra con colore oc
+              f+=':borderw='+outlineW+':bordercolor='+oc+
+                 ':shadowx='+Math.round(2*sx)+':shadowy='+Math.round(2*sy)+':shadowcolor='+col(oc,20);
+              break;
+            case 'neon':
+              // Bordo colorato più spesso + ombra per simulare il glow
+              f+=':borderw='+Math.max(outlineW,Math.round(2*sx))+':bordercolor='+oc+
+                 ':shadowx=0:shadowy=0:shadowcolor='+oc;
+              break;
+            case 'highlight':
+              f+=':box=1:boxcolor='+col(oc,0)+':boxborderw='+Math.round(10*sx);
+              break;
+            case 'minimal':
+              // FIX: usa oc per il colore ombra, come nel preview (textShadow usa oc)
+              f+=':shadowx='+Math.round(1*sx)+':shadowy='+Math.round(1*sy)+':shadowcolor='+col(oc,30);
+              break;
+            case 'typewriter':
+              f+=':box=1:boxcolor='+col('#000000',45)+':boxborderw='+Math.round(10*sx);
+              break;
+            case 'pulito':
+              if(outlineW>0) f+=':borderw='+outlineW+':bordercolor='+oc;
+              break;
+            default:
+              f+=':borderw='+outlineW+':bordercolor='+oc;
+          }
+          // FIX: Fade animazione — alpha expression per fade in/out 0.15s
+          if(style.anim && (e-s)>0.3){
+            const fadeIn='if(lt(t-'+s.toFixed(3)+',0.15),(t-'+s.toFixed(3)+')/0.15,';
+            const fadeOut='if(lt('+e.toFixed(3)+'-t,0.15),('+e.toFixed(3)+'-t)/0.15,1))';
+            f+=':alpha=''+fadeIn+fadeOut+"'";
           }
           f+=':x=(w-text_w)/2:y='+bottomY;
           filters.push(f);
