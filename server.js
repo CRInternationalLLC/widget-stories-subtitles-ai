@@ -166,7 +166,7 @@ app.post('/api/burn', upload.fields([{name:'video',maxCount:1}]), (req,res)=>{
           if(style.anim && (e-s)>0.3){
             const fadeIn='if(lt(t-'+s.toFixed(3)+',0.15),(t-'+s.toFixed(3)+')/0.15,';
             const fadeOut='if(lt('+e.toFixed(3)+'-t,0.15),('+e.toFixed(3)+'-t)/0.15,1))';
-            f+=':alpha=''+fadeIn+fadeOut+"'";
+            f+=":alpha='"+fadeIn+fadeOut+"'";
           }
           f+=':x=(w-text_w)/2:y='+bottomY;
           filters.push(f);
