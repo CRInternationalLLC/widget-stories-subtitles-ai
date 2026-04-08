@@ -1372,7 +1372,7 @@ window.runAll = async function() {
       // STEP 4: Burn video lato server
       sStep(4,'active');
       updateItem(item.id, 'running', 'Rendering video...', 50);
-      var blob = await burnVideo(item.file, assContent, settings);
+      var blob = await burnVideo(item.file, chunks, settings);
       sStep(4,'done');
 
       item.blob = blob;
