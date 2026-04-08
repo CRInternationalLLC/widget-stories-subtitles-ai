@@ -1,0 +1,10 @@
+# Backup config se il Dockerfile viene rimosso
+# Railway usa questo per installare FFmpeg con Nixpacks
+[phases.setup]
+nixPkgs = ["ffmpeg"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[start]
+cmd = "node server.js"
